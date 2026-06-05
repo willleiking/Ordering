@@ -1,171 +1,212 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>雞伯燒烤 - 歡迎</title>
-    <style>
-        :root {
-            --primary: #e85d04;
-            --bg: #fdf6f0;
-            --text: #2d1a0e;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
-            background: linear-gradient(135deg, #1a0a00 0%, #3d1c00 40%, #5c2d0a 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .container {
-            background: #fff;
-            border-radius: 24px;
-            padding: 40px 30px;
-            max-width: 400px;
-            width: 100%;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-        .logo {
-            font-size: 60px;
-            margin-bottom: 10px;
-        }
-        h1 {
-            font-size: 1.8rem;
-            color: #2d1a0e;
-            margin-bottom: 4px;
-        }
-        .branch {
-            color: #888;
-            font-size: 0.9rem;
-            margin-bottom: 24px;
-        }
-        .input-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 6px;
-            color: #5c3a1e;
-            font-size: 0.9rem;
-        }
-        input {
-            width: 100%;
-            padding: 14px 18px;
-            border: 2px solid #e0d5ca;
-            border-radius: 14px;
-            font-size: 1.2rem;
-            font-weight: 600;
-            text-align: center;
-            letter-spacing: 2px;
-            transition: 0.2s;
-            font-family: inherit;
-        }
-        input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(232,93,4,0.1);
-        }
-        .btn-enter {
-            width: 100%;
-            padding: 16px;
-            background: var(--primary);
-            color: #fff;
-            border: none;
-            border-radius: 14px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            cursor: pointer;
-            letter-spacing: 1px;
-            transition: 0.2s;
-            box-shadow: 0 4px 16px rgba(232,93,4,0.3);
-        }
-        .btn-enter:hover {
-            background: #c44b03;
-            transform: translateY(-2px);
-        }
-        .btn-enter:active {
-            transform: scale(0.97);
-        }
-        .hint {
-            margin-top: 16px;
-            color: #aaa;
-            font-size: 0.8rem;
-        }
-        .error-msg {
-            color: #e74c3c;
-            font-size: 0.85rem;
-            margin-top: 8px;
-            display: none;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="logo">🔥</div>
-        <h1>雞伯燒烤</h1>
-        <p class="branch">RIA店</p>
-        
-        <div class="input-group">
-            <label for="tableInput">🪑 請輸入您的桌號</label>
-            <input 
-                type="text" 
-                id="tableInput" 
-                placeholder="例如：A12" 
-                maxlength="10"
-                autocomplete="off"
-                inputmode="text"
-            >
-            <div class="error-msg" id="errorMsg">請輸入桌號</div>
-        </div>
-        
-        <button class="btn-enter" id="btnEnter" onclick="enterMenu()">
-            進入點餐 🍽️
-        </button>
-        
-        <p class="hint">請查看桌上的桌號牌</p>
-    </div>
+// ====================================
+//  雞伯燒烤 菜單資料檔
+//  直接編輯這個檔案即可更改菜單！
+//  修改後上傳到 GitHub 就生效
+// ====================================
 
-    <script>
-        function enterMenu() {
-            const tableInput = document.getElementById('tableInput').value.trim();
-            const errorMsg = document.getElementById('errorMsg');
-            
-            if (!tableInput) {
-                errorMsg.style.display = 'block';
-                document.getElementById('tableInput').focus();
-                return;
-            }
-            
-            errorMsg.style.display = 'none';
-            
-            // 儲存桌號到 sessionStorage
-            sessionStorage.setItem('currentTable', tableInput);
-            
-            // 跳轉到點餐頁面
-            window.location.href = 'menu.html';
+const MENU_DATA = {
+    "restaurant": {
+        "name": "雞伯燒烤",
+        "branch": "新莊店"
+    },
+    "categories": [
+        {
+            "id": "cat1",
+            "name": "🔥 主廚推薦",
+            "items": [
+                {
+                    "id": "item1",
+                    "name": "招牌RIA",
+                    "desc": "嚴選放山雞，特製醬料醃漬24小時，炭火慢烤至金黃酥脆",
+                    "price": 680,
+                    "image": "",
+                    "available": true
+                },
+                {
+                    "id": "item2",
+                    "name": "炭烤柔柔",
+                    "desc": "進口豬肋排，低溫慢烤8小時，搭配秘製BBQ醬",
+                    "price": 520,
+                    "image": "",
+                    "available": true
+                },
+                {
+                    "id": "item3",
+                    "name": "鹽烤大立榮",
+                    "desc": "新鮮大蝦，簡單鹽烤保留鮮甜海味",
+                    "price": 380,
+                    "image": "",
+                    "available": true
+                },
+                {
+                    "id": "item4",
+                    "name": "綜合烤百百",
+                    "desc": "雞肉、豬肉、牛肉三種組合，適合2-3人分享",
+                    "price": 450,
+                    "image": "",
+                    "available": true
+                }
+            ]
+        },
+        {
+            "id": "cat2",
+            "name": "🍢 串燒系列",
+            "items": [
+                {
+                    "id": "item5",
+                    "name": "醬烤雞肉串",
+                    "desc": "鮮嫩雞腿肉，日式照燒醬 (2串)",
+                    "price": 120,
+                    "image": "",
+                    "available": true
+                },
+                {
+                    "id": "item6",
+                    "name": "孜然羊肉串",
+                    "desc": "紐西蘭羊肉，新疆孜然風味 (2串)",
+                    "price": 160,
+                    "image": "",
+                    "available": true
+                },
+                {
+                    "id": "item7",
+                    "name": "培根蘆筍串",
+                    "desc": "煙燻培根包裹鮮脆蘆筍 (2串)",
+                    "price": 130,
+                    "image": "",
+                    "available": true
+                },
+                {
+                    "id": "item8",
+                    "name": "明太子雞翅串",
+                    "desc": "手工去骨雞翅填入明太子 (2串)",
+                    "price": 180,
+                    "image": "",
+                    "available": false
+                }
+            ]
+        },
+        {
+            "id": "cat3",
+            "name": "🍜 主餐麵食",
+            "items": [
+                {
+                    "id": "item15",
+                    "name": "龍安郵局拉麵",
+                    "desc": "濃郁豚骨湯頭，搭配叉燒肉、溏心蛋、海苔，龍安郵局旁超人氣拉麵",
+                    "price": 220,
+                    "image": "",
+                    "available": true
+                },
+                {
+                    "id": "item16",
+                    "name": "土城土雞湯",
+                    "desc": "土城放山土雞熬煮8小時，湯頭濃郁鮮美，搭配手工麵線",
+                    "price": 280,
+                    "image": "",
+                    "available": true
+                },
+                {
+                    "id": "item17",
+                    "name": "沛恩圖釘特餐",
+                    "desc": "主廚特製牛排搭配香煎干貝，佐紅酒醬汁",
+                    "price": 420,
+                    "image": "",
+                    "available": true
+                }
+            ]
+        },
+        {
+            "id": "cat4",
+            "name": "🥗 配餐小點",
+            "items": [
+                {
+                    "id": "item9",
+                    "name": "和風沙拉",
+                    "desc": "新鮮生菜搭配和風醬汁",
+                    "price": 100,
+                    "image": "",
+                    "available": true
+                },
+                {
+                    "id": "item10",
+                    "name": "酥炸薯條",
+                    "desc": "金黃酥脆粗薯條，附番茄醬",
+                    "price": 90,
+                    "image": "",
+                    "available": true
+                },
+                {
+                    "id": "item11",
+                    "name": "蒜香麵包",
+                    "desc": "法式麵包抹上自製蒜香奶油烤製",
+                    "price": 80,
+                    "image": "",
+                    "available": true
+                }
+            ]
+        },
+        {
+            "id": "cat5",
+            "name": "🥤 飲料",
+            "items": [
+                {
+                    "id": "item12",
+                    "name": "冰涼啤酒",
+                    "desc": "台灣金牌啤酒 500ml",
+                    "price": 80,
+                    "image": "",
+                    "available": true
+                },
+                {
+                    "id": "item13",
+                    "name": "可樂/雪碧",
+                    "desc": "罐裝 330ml",
+                    "price": 40,
+                    "image": "",
+                    "available": true
+                },
+                {
+                    "id": "item14",
+                    "name": "烏梅汁",
+                    "desc": "自製古早味烏梅汁，解膩首選",
+                    "price": 60,
+                    "image": "",
+                    "available": true
+                },
+                {
+                    "id": "item18",
+                    "name": "珍珠奶茶",
+                    "desc": "手搖黑糖珍珠，搭配濃郁鮮奶茶，台灣經典飲品",
+                    "price": 85,
+                    "image": "",
+                    "available": true
+                },
+                {
+                    "id": "item19",
+                    "name": "沛恩圖釘特調",
+                    "desc": "清爽檸檬氣泡飲，搭配薄荷與接骨木花",
+                    "price": 95,
+                    "image": "",
+                    "available": true
+                },
+                {
+                    "id": "item20",
+                    "name": "蜂蜜柚子茶",
+                    "desc": "韓國進口柚子醬，搭配台灣龍眼蜜",
+                    "price": 70,
+                    "image": "",
+                    "available": true
+                },
+                {
+                    "id": "item21",
+                    "name": "日式抹茶拿鐵",
+                    "desc": "靜岡抹茶粉搭配濃郁鮮奶，可選冰/熱",
+                    "price": 90,
+                    "image": "",
+                    "available": true
+                }
+            ]
         }
-        
-        // 鍵盤 Enter 也可以進入
-        document.getElementById('tableInput').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                enterMenu();
-            }
-        });
-        
-        // 自動聚焦輸入框
-        document.getElementById('tableInput').focus();
-        
-        // 如果已經有桌號（從菜單頁返回），預先填入
-        const savedTable = sessionStorage.getItem('currentTable');
-        if (savedTable) {
-            document.getElementById('tableInput').value = savedTable;
-        }
-    </script>
-</body>
-</html>
+    ]
+};
