@@ -54,7 +54,7 @@ const MENU_DATA = {
             "items": [
                 {
                     "id": "item5",
-                    "name": "醬烤雞肉串",
+                    "name": "RAY雞肉串",
                     "desc": "鮮嫩雞腿肉，日式照燒醬 (2串)",
                     "price": 120,
                     "image": "",
@@ -62,7 +62,7 @@ const MENU_DATA = {
                 },
                 {
                     "id": "item6",
-                    "name": "孜然羊肉串",
+                    "name": "孜然ANNA",
                     "desc": "紐西蘭羊肉，新疆孜然風味 (2串)",
                     "price": 160,
                     "image": "",
@@ -70,7 +70,7 @@ const MENU_DATA = {
                 },
                 {
                     "id": "item7",
-                    "name": "培根蘆筍串",
+                    "name": "培根玉霖",
                     "desc": "煙燻培根包裹鮮脆蘆筍 (2串)",
                     "price": 130,
                     "image": "",
@@ -78,7 +78,7 @@ const MENU_DATA = {
                 },
                 {
                     "id": "item8",
-                    "name": "明太子雞翅串",
+                    "name": "明太子娃娃",
                     "desc": "手工去骨雞翅填入明太子 (2串)",
                     "price": 180,
                     "image": "",
@@ -122,7 +122,7 @@ const MENU_DATA = {
             "items": [
                 {
                     "id": "item9",
-                    "name": "和風沙拉",
+                    "name": "和風沙拉咸安",
                     "desc": "新鮮生菜搭配和風醬汁",
                     "price": 100,
                     "image": "",
@@ -130,7 +130,7 @@ const MENU_DATA = {
                 },
                 {
                     "id": "item10",
-                    "name": "酥炸薯條",
+                    "name": "酥炸小酆薯條",
                     "desc": "金黃酥脆粗薯條，附番茄醬",
                     "price": 90,
                     "image": "",
@@ -138,7 +138,7 @@ const MENU_DATA = {
                 },
                 {
                     "id": "item11",
-                    "name": "蒜香麵包",
+                    "name": "蒜香姿云",
                     "desc": "法式麵包抹上自製蒜香奶油烤製",
                     "price": 80,
                     "image": "",
