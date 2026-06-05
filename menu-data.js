@@ -168,7 +168,7 @@ const MENU_DATA = {
                 },
                 {
                     "id": "item14",
-                    "name": "烏梅汁",
+                    "name": "烏梅冠霖汁",
                     "desc": "自製古早味烏梅汁，解膩首選",
                     "price": 60,
                     "image": "",
@@ -192,7 +192,7 @@ const MENU_DATA = {
                 },
                 {
                     "id": "item20",
-                    "name": "蜂蜜柚子茶",
+                    "name": "蜂蜜茂鑫",
                     "desc": "韓國進口柚子醬，搭配台灣龍眼蜜",
                     "price": 70,
                     "image": "",
@@ -200,7 +200,7 @@ const MENU_DATA = {
                 },
                 {
                     "id": "item21",
-                    "name": "日式抹茶拿鐵",
+                    "name": "日式抹茶索妮雅",
                     "desc": "靜岡抹茶粉搭配濃郁鮮奶，可選冰/熱",
                     "price": 90,
                     "image": "",
