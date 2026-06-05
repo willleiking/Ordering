@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>餐廳管理後台</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #e85d04;
+            --bg: #f9f6f3;
+            --card: #fff;
+            --text: #2d1a0e;
+            --radius: 12px;
+            --shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif; background: var(--bg); color: var(--text); padding: 20px; max-width: 800px; margin: 0 auto; }
+        h1 { font-size: 1.8rem; color: var(--primary); margin-bottom: 6px; }
+        .subtitle { color: #888; margin-bottom: 24px; }
+        .section { background: var(--card); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); }
+        .section h2 { font-size: 1.2rem; margin-bottom: 14px; }
+        label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 4px; color: #5c3a1e; }
+        input, textarea, select { width: 100%; padding: 10px 12px; border: 1.5px solid #e0d5ca; border-radius: 8px; font-size: 0.95rem; margin-bottom: 12px; font-family: inherit; }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: var(--primary); }
+        .row { display: flex; gap: 12px; flex-wrap: wrap; }
+        .row > * { flex: 1; min-width: 120px; }
+        .btn { background: var(--primary); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; margin-right: 8px; margin-top: 4px; }
+        .btn:hover { background: #c44b03; }
+        .btn-outline { background: #fff; color: var(--primary); border: 1.5px solid var(--primary); }
+        .btn-outline:hover { background: #fff5f0; }
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        .item-card { background: #fdfaf7; border: 1px solid #f0dcc8; border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+        .item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .item-name-display { font-weight: 700; font-size: 1rem; }
+        .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+        .badge-available { background: #d4edda; color: #155724; }
+        .badge-unavailable { background: #f8d7da; color: #721c24; }
+        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-120px); background: #333; color: #fff; padding: 12px 24px; border-radius: 25px; font-weight: 600; z-index: 999; transition: 0.35s; pointer-events: none; }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        @media (max-width: 500px) { body { padding: 12px; } .row > * { min-width: 100%; } }
+    </style>
+</head>
+<body>
+
+    <h1>🔧 餐廳管理後台</h1>
+    <p class="subtitle">修改餐點、價格、上架狀態 • 即時同步至顧客菜單</p>
+
+    <div class="section">
+        <h2>🏠 餐廳資訊</h2>
+        <div class="row">
+            <div><label>餐廳名稱</label><input type="text" id="restName"></div>
+            <div><label>分店名稱</label><input type="text" id="restBranch"></div>
+        </div>
+        <button class="btn" onclick="saveRestInfo()">💾 儲存餐廳資訊</button>
+    </div>
+
+    <div class="section">
+        <h2>➕ 新增 / 編輯餐點</h2>
+        <input type="hidden" id="editItemId">
+        <div class="row">
+            <div><label>所屬分類</label><select id="itemCategory"></select></div>
+            <div><label>餐點名稱</label><input type="text" id="itemName"></div>
+        </div>
+        <div class="row">
+            <div><label>價格</label><input type="number" id="itemPrice" min="0"></div>
+            <div><label>狀態</label><select id="itemAvailable"><option value="true">✅ 上架中</option><option value="false">❌ 暫停供應</option></select></div>
+        </div>
+        <label>描述</label><textarea id="itemDesc" rows="2"></textarea>
+        <label>圖片網址 (選填)</label><input type="text" id="itemImage">
+        <button class="btn" onclick="saveItem()">💾 儲存餐點</button>
+        <button class="btn btn-outline" onclick="resetForm()">🔄 清空表單</button>
+    </div>
+
+    <div class="section">
+        <h2>📂 管理分類</h2>
+        <div class="row"><input type="text" id="newCatName" placeholder="新分類名稱"><button class="btn" onclick="addCategory()">➕ 新增分類</button></div>
+        <div id="catList" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="section">
+        <h2>📋 餐點列表</h2>
+        <div id="allItemsList"></div>
+        <button class="btn btn-outline" onclick="renderAllItems()" style="margin-top:8px;">🔄 重新整理</button>
+    </div>
+
+    <div class="section" style="text-align:center;">
+        <button class="btn btn-danger" onclick="resetAll()">⚠️ 重設為預設菜單</button>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://YOUR-PROJECT-ID.supabase.co';
+        const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const DEFAULT_DATA = {
+            restaurant: { name: '雞伯燒烤', branch: 'RR店' },
+            categories: [
+                { id: 'cat1', name: '🔥 主廚推薦', items: [
+                    { id: 'item1', name: '招牌桶仔雞', desc: '嚴選放山雞，特製醬料醃漬24小時', price: 680, image: '', available: true },
+                    { id: 'item2', name: '炭烤豬肋排', desc: '進口豬肋排，低溫慢烤8小時', price: 520, image: '', available: true },
+                    { id:
