@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code 產生器 | 雞伯燒烤</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        :root{--primary:#e85d04}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI','PingFang TC','Microsoft JhengHei',sans-serif;background:#fdf6f0;min-height:100vh;padding:20px}
+        .container{max-width:800px;margin:0 auto}
+        h1{font-size:1.6rem;color:var(--primary);margin-bottom:4px;text-align:center}
+        .sub{color:#888;text-align:center;margin-bottom:24px;font-size:.9rem}
+        .section{background:#fff;border-radius:16px;padding:24px;margin-bottom:20px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+        .section h2{font-size:1.1rem;margin-bottom:12px;color:#3d1c00}
+        .input-group{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:12px}
+        .input-group>div{flex:1;min-width:120px}
+        label{display:block;font-weight:600;font-size:.85rem;margin-bottom:4px;color:#5c3a1e}
+        input,select{width:100%;padding:10px 12px;border:1.5px solid #e0d5ca;border-radius:8px;font-size:.9rem;font-family:inherit}
+        input:focus,select:focus{outline:none;border-color:var(--primary)}
+        .btn{background:var(--primary);color:#fff;border:none;padding:10px 20px;border-radius:8px;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+        .btn:active{transform:scale(.97)}
+        .btn-outline{background:#fff;color:var(--primary);border:1.5px solid var(--primary)}
+        .qr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;margin-top:16px}
+        .qr-card{background:#fdfaf7;border:1px solid #f0dcc8;border-radius:12px;padding:16px;text-align:center}
+        .qr-card .table-label{font-weight:700;font-size:1rem;margin-bottom:8px;color:var(--primary)}
+        .qr-card canvas{width:120px!important;height:120px!important}
+        .range-input{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+        .range-input input{width:80px;text-align:center}
+        .url-preview{background:#f9f9f9;padding:8px 12px;border-radius:6px;font-size:.8rem;color:#666;word-break:break-all;margin-top:8px}
+        @media print{body{background:#fff;padding:0}.section{box-shadow:none;break-inside:avoid}.btn,.input-group,.no-print{display:none!important}.qr-grid{grid-template-columns:repeat(4,1fr);gap:8px}.qr-card{border:1px dashed #ccc}}
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔳 QR Code 產生器</h1>
+    <p class="sub">為每張桌子產生專屬 QR Code，客人掃碼自動帶入桌號</p>
+    
+    <div class="section no-print">
+        <h2>⚙️ 您的網站網址</h2>
+        <input type="text" id="baseUrl" placeholder="https://你的網址.github.io/restaurant-menu/index.html">
+        <p style="font-size:.8rem;color:#888;margin-top:4px">💡 例如：https://你的帳號.github.io/restaurant-menu/index.html</p>
+    </div>
+    
+    <div class="section">
+        <h2>🪑 單桌產生</h2>
+        <div class="input-group">
+            <div><label>桌號</label><input type="text" id="singleTable" placeholder="例如：A12"></div>
+            <button class="btn" onclick="generateSingle()" style="align-self:end">➕ 產生</button>
+        </div>
+        <div class="url-preview" id="singlePreview"></div>
+        <div id="singleQR" style="margin-top:12px;text-align:center"></div>
+    </div>
+    
+    <div class="section">
+        <h2>📋 批量產生</h2>
+        <div class="input-group">
+            <div><label>桌號格式</label><input type="text" id="prefix" placeholder="例如：A"></div>
+            <div class="range-input"><label>從</label><input type="number" id="rangeStart" value="1" min="1"><label>到</label><input type="number" id="rangeEnd" value="10" min="1"></div>
+            <button class="btn" onclick="generateBatch()" style="align-self:end">📋 批次產生</button>
+        </div>
+        <div class="qr-grid" id="batchQR"></div>
+        <button class="btn btn-outline no-print" onclick="window.print()" style="margin-top:12px">🖨️ 列印所有</button>
+    </div>
+    
+    <div class="section">
+        <h2>✏️ 自訂桌號列表</h2>
+        <div class="input-group">
+            <div><label>桌號（用逗號分隔）</label><input type="text" id="customTables" placeholder="例如：A1,A2,B1,包廂1"></div>
+            <button class="btn" onclick="generateCustom()" style="align-self:end">🎯 產生</button>
+        </div>
+        <div class="qr-grid" id="customQR"></div>
+    </div>
+</div>
+
+<script>
+let baseUrl=localStorage.getItem('qrBaseUrl')||'';
+if(baseUrl)document.getElementById('baseUrl').value=baseUrl;
+
+function getBaseUrl(){
+    const url=document.getElementById('baseUrl').value.trim();
+    if(!url){alert('請輸入網站網址');return null}
+    localStorage.setItem('qrBaseUrl',url);
+    return url;
+}
+
+function buildUrl(tableNum){
+    const url=getBaseUrl();
+    if(!url)return null;
+    const sep=url.includes('?')?'&':'?';
+    return`${url}${sep}table=${encodeURIComponent(tableNum)}`;
+}
+
+function createQRCard(container,tableNum,url,size=120){
+    const card=document.createElement('div');
+    card.className='qr-card';
+    card.innerHTML=`<div class="table-label">🪑 ${tableNum}</div>`;
+    container.appendChild(card);
+    new QRCode(card,{text:url,width:size,height:size,colorDark:'#2d1a0e',colorLight:'#ffffff'});
+    const btn=document.createElement('button');
+    btn.className='btn btn-outline no-print';
+    btn.style.cssText='padding:4px 10px;font-size:.75rem;margin-top:6px';
+    btn.textContent='💾 下載';
+    btn.onclick=()=>{
+        const canvas=card.querySelector('canvas');
+        if(canvas){const a=document.createElement('a');a.download=`桌號${tableNum}_QRCode.png`;a.href=canvas.toDataURL();a.click()}
+    };
+    card.appendChild(btn);
+}
+
+function generateSingle(){
+    const table=document.getElementById('singleTable').value.trim();
+    if(!table)return alert('請輸入桌號');
+    const url=buildUrl(table);
+    if(!url)return;
+    document.getElementById('singlePreview').textContent=`🔗 ${url}`;
+    document.getElementById('singleQR').innerHTML='';
+    createQRCard(document.getElementById('singleQR'),table,url,150);
+}
+
+function generateBatch(){
+    const prefix=document.getElementById('prefix').value.trim();
+    const start=parseInt(document.getElementById('rangeStart').value);
+    const end=parseInt(document.getElementById('rangeEnd').value);
+    if(start>end)return alert('起始數字不能大於結束數字');
+    const container=document.getElementById('batchQR');
+    container.innerHTML='';
+    for(let i=start;i<=end;i++){
+        const tableNum=prefix?`${prefix}${i}`:`${i}`;
+        const url=buildUrl(tableNum);
+        if(!url)return;
+        createQRCard(container,tableNum,url);
+    }
+}
+
+function generateCustom(){
+    const input=document.getElementById('customTables').value.trim();
+    if(!input)return alert('請輸入桌號列表');
+    const tables=input.split(',').map(t=>t.trim()).filter(t=>t);
+    if(tables.length===0)return alert('請輸入至少一個桌號');
+    const container=document.getElementById('customQR');
+    container.innerHTML='';
+    tables.forEach(tableNum=>{
+        const url=buildUrl(tableNum);
+        if(!url)return;
+        createQRCard(container,tableNum,url);
+    });
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+    if(!document.getElementById('baseUrl').value){
+        const host=window.location.hostname;
+        if(host.includes('github.io')){
+            const path=window.location.pathname.replace('/qr-generator.html','/index.html');
+            document.getElementById('baseUrl').value=`https://${host}${path}`;
+        }
+    }
+});
+</script>
+</body>
+</html>

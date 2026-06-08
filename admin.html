@@ -3,103 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>餐廳管理後台</title>
+    <title>餐點管理 | 雞伯燒烤</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root {
-            --primary: #e85d04;
-            --bg: #f9f6f3;
-            --card: #fff;
-            --text: #2d1a0e;
-            --radius: 12px;
-            --shadow: 0 2px 12px rgba(0,0,0,0.08);
-        }
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif; background: var(--bg); color: var(--text); padding: 20px; max-width: 800px; margin: 0 auto; }
-        h1 { font-size: 1.8rem; color: var(--primary); margin-bottom: 6px; }
-        .subtitle { color: #888; margin-bottom: 24px; }
-        .section { background: var(--card); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow); }
-        .section h2 { font-size: 1.2rem; margin-bottom: 14px; }
-        label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 4px; color: #5c3a1e; }
-        input, textarea, select { width: 100%; padding: 10px 12px; border: 1.5px solid #e0d5ca; border-radius: 8px; font-size: 0.95rem; margin-bottom: 12px; font-family: inherit; }
-        input:focus, textarea:focus, select:focus { outline: none; border-color: var(--primary); }
-        .row { display: flex; gap: 12px; flex-wrap: wrap; }
-        .row > * { flex: 1; min-width: 120px; }
-        .btn { background: var(--primary); color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; margin-right: 8px; margin-top: 4px; }
-        .btn:hover { background: #c44b03; }
-        .btn-outline { background: #fff; color: var(--primary); border: 1.5px solid var(--primary); }
-        .btn-outline:hover { background: #fff5f0; }
-        .btn-danger { background: #e74c3c; }
-        .btn-danger:hover { background: #c0392b; }
-        .item-card { background: #fdfaf7; border: 1px solid #f0dcc8; border-radius: 10px; padding: 14px; margin-bottom: 10px; }
-        .item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .item-name-display { font-weight: 700; font-size: 1rem; }
-        .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
-        .badge-available { background: #d4edda; color: #155724; }
-        .badge-unavailable { background: #f8d7da; color: #721c24; }
-        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-120px); background: #333; color: #fff; padding: 12px 24px; border-radius: 25px; font-weight: 600; z-index: 999; transition: 0.35s; pointer-events: none; }
-        .toast.show { transform: translateX(-50%) translateY(0); }
-        @media (max-width: 500px) { body { padding: 12px; } .row > * { min-width: 100%; } }
+        :root{--primary:#e85d04;--bg:#f9f6f3;--card:#fff;--text:#2d1a0e}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI','PingFang TC','Microsoft JhengHei',sans-serif;background:var(--bg);color:var(--text);padding:16px;max-width:900px;margin:0 auto}
+        h1{font-size:1.6rem;color:var(--primary);margin-bottom:4px}
+        .sub{color:#888;margin-bottom:20px;font-size:.9rem}
+        .section{background:var(--card);border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+        .section h2{font-size:1.1rem;margin-bottom:12px;color:#5c3a1e}
+        label{display:block;font-weight:600;font-size:.85rem;margin-bottom:4px;color:#5c3a1e}
+        input,textarea,select{width:100%;padding:10px 12px;border:1.5px solid #e0d5ca;border-radius:8px;font-size:.9rem;margin-bottom:10px;font-family:inherit}
+        input:focus,textarea:focus,select:focus{outline:none;border-color:var(--primary)}
+        .row{display:flex;gap:10px;flex-wrap:wrap}
+        .row>*{flex:1;min-width:120px}
+        .btn{background:var(--primary);color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;margin-right:6px;margin-top:4px}
+        .btn:hover{background:#c44b03}
+        .btn-outline{background:#fff;color:var(--primary);border:1.5px solid var(--primary)}
+        .btn-danger{background:#e74c3c}
+        .btn-danger:hover{background:#c0392b}
+        .btn-sm{padding:4px 10px;font-size:.75rem}
+        .item-card{background:#fdfaf7;border:1px solid #f0dcc8;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+        .item-info{flex:1;min-width:150px}
+        .item-name{font-weight:700;font-size:.95rem}
+        .item-meta{font-size:.8rem;color:#888}
+        .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:600}
+        .badge-on{background:#d4edda;color:#155724}
+        .badge-off{background:#f8d7da;color:#721c24}
+        .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-120px);background:#333;color:#fff;padding:10px 20px;border-radius:20px;font-weight:600;z-index:999;transition:.35s;pointer-events:none;font-size:.85rem}
+        .toast.show{transform:translateX(-50%) translateY(0)}
     </style>
 </head>
 <body>
 
-    <h1>🔧 餐廳管理後台</h1>
-    <p class="subtitle">修改餐點、價格、上架狀態 • 即時同步至顧客菜單</p>
+<h1>🔧 餐點管理後台</h1>
+<p class="sub">新增 / 編輯 / 刪除餐點 · 即時同步至顧客菜單</p>
 
-    <div class="section">
-        <h2>🏠 餐廳資訊</h2>
-        <div class="row">
-            <div><label>餐廳名稱</label><input type="text" id="restName"></div>
-            <div><label>分店名稱</label><input type="text" id="restBranch"></div>
-        </div>
-        <button class="btn" onclick="saveRestInfo()">💾 儲存餐廳資訊</button>
+<div class="section">
+    <h2>🏠 餐廳資訊</h2>
+    <div class="row">
+        <div><label>餐廳名稱</label><input type="text" id="restName"></div>
+        <div><label>分店名稱</label><input type="text" id="restBranch"></div>
     </div>
+    <button class="btn" onclick="saveRestInfo()">💾 儲存</button>
+</div>
 
-    <div class="section">
-        <h2>➕ 新增 / 編輯餐點</h2>
-        <input type="hidden" id="editItemId">
-        <div class="row">
-            <div><label>所屬分類</label><select id="itemCategory"></select></div>
-            <div><label>餐點名稱</label><input type="text" id="itemName"></div>
-        </div>
-        <div class="row">
-            <div><label>價格</label><input type="number" id="itemPrice" min="0"></div>
-            <div><label>狀態</label><select id="itemAvailable"><option value="true">✅ 上架中</option><option value="false">❌ 暫停供應</option></select></div>
-        </div>
-        <label>描述</label><textarea id="itemDesc" rows="2"></textarea>
-        <label>圖片網址 (選填)</label><input type="text" id="itemImage">
-        <button class="btn" onclick="saveItem()">💾 儲存餐點</button>
-        <button class="btn btn-outline" onclick="resetForm()">🔄 清空表單</button>
+<div class="section">
+    <h2>➕ 新增 / 編輯餐點</h2>
+    <input type="hidden" id="editId">
+    <div class="row">
+        <div><label>分類名稱</label><input type="text" id="catName" placeholder="例如：🔥 主廚推薦"></div>
+        <div><label>分類 ID</label><input type="text" id="catId" placeholder="例如：cat1"></div>
     </div>
-
-    <div class="section">
-        <h2>📂 管理分類</h2>
-        <div class="row"><input type="text" id="newCatName" placeholder="新分類名稱"><button class="btn" onclick="addCategory()">➕ 新增分類</button></div>
-        <div id="catList" style="margin-top:12px;"></div>
+    <div class="row">
+        <div><label>餐點名稱</label><input type="text" id="itemName"></div>
+        <div><label>價格</label><input type="number" id="itemPrice" min="0"></div>
     </div>
-
-    <div class="section">
-        <h2>📋 餐點列表</h2>
-        <div id="allItemsList"></div>
-        <button class="btn btn-outline" onclick="renderAllItems()" style="margin-top:8px;">🔄 重新整理</button>
+    <div class="row">
+        <div><label>狀態</label><select id="itemAvailable"><option value="true">✅ 上架</option><option value="false">❌ 暫停</option></select></div>
+        <div><label>排序</label><input type="number" id="itemSort" value="0" min="0"></div>
     </div>
+    <label>描述</label><textarea id="itemDesc" rows="2"></textarea>
+    <label>圖片網址</label><input type="text" id="itemImage" placeholder="https://...">
+    <button class="btn" onclick="saveItem()">💾 儲存餐點</button>
+    <button class="btn btn-outline" onclick="resetForm()">🔄 清空</button>
+</div>
 
-    <div class="section" style="text-align:center;">
-        <button class="btn btn-danger" onclick="resetAll()">⚠️ 重設為預設菜單</button>
-    </div>
+<div class="section">
+    <h2>📋 現有餐點</h2>
+    <div id="itemList">載入中...</div>
+</div>
 
-    <div class="toast" id="toast"></div>
+<div class="toast" id="toast"></div>
 
-    <script>
-        const SUPABASE_URL = 'https://YOUR-PROJECT-ID.supabase.co';
-        const SUPABASE_ANON_KEY = 'YOUR-ANON-KEY';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+<script>
+const SUPABASE_URL = 'https://jqlklgrdefjoolngedqg.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxbGtsZ3JkZWZqb29sbmdlZHFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3MTY0OTIsImV4cCI6MjA5NjI5MjQ5Mn0.bnSozHES6CJtgh3FU4OeHRKv942Tx4rCS9buSmKq-6k';
 
-        const DEFAULT_DATA = {
-            restaurant: { name: '雞伯燒烤', branch: 'RR店' },
-            categories: [
-                { id: 'cat1', name: '🔥 主廚推薦', items: [
-                    { id: 'item1', name: '招牌桶仔雞', desc: '嚴選放山雞，特製醬料醃漬24小時', price: 680, image: '', available: true },
-                    { id: 'item2', name: '炭烤豬肋排', desc: '進口豬肋排，低溫慢烤8小時', price: 520, image: '', available: true },
-                    { id:
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000)}
+
+async function loadRestInfo(){
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/restaurant_info?id=eq.1`,{headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}});
+    const data=await res.json();
+    if(data.length>0){document.getElementById('restName').value=data[0].name;document.getElementById('restBranch').value=data[0].branch}
+}
+
+async function saveRestInfo(){
+    await fetch(`${SUPABASE_URL}/rest/v1/restaurant_info?id=eq.1`,{
+        method:'PATCH',
+        headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify({name:document.getElementById('restName').value,branch:document.getElementById('restBranch').value})
+    });
+    showToast('✅ 餐廳資訊已儲存')
+}
+
+async function loadItems(){
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/menu_items?order=sort_order.asc`,{headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}});
+    const items=await res.json();
+    const container=document.getElementById('itemList');
+    if(items.length===0){container.innerHTML='<p style="color:#888">尚無餐點</p>';return}
+    const cats={};
+    items.forEach(i=>{if(!cats[i.category_id])cats[i.category_id]={name:i.category_name,items:[]};cats[i.category_id].items.push(i)});
+    container.innerHTML=Object.entries(cats).map(([cid,cat])=>`
+        <h3 style="margin-top:12px;color:var(--primary)">${cat.name}</h3>
+        ${cat.items.map(i=>`
+            <div class="item-card">
+                <div class="item-info">
+                    <div class="item-name">${i.name}</div>
+                    <div class="item-meta">💰 $${i.price} | 🏷️ ${i.category_name} | <span class="badge ${i.available?'badge-on':'badge-off'}">${i.available?'上架':'暫停'}</span></div>
+                </div>
+                <div>
+                    <button class="btn btn-outline btn-sm" onclick="editItem('${i.id}')">✏️</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteItem('${i.id}')">🗑️</button>
+                </div>
+            </div>
+        `).join('')}
+    `).join('');
+}
+
+async function saveItem(){
+    const id=document.getElementById('editId').value||'item_'+Date.now();
+    const data={
+        id:id,
+        category_id:document.getElementById('catId').value||'default',
+        category_name:document.getElementById('catName').value||'未分類',
+        name:document.getElementById('itemName').value,
+        price:parseInt(document.getElementById('itemPrice').value)||0,
+        description:document.getElementById('itemDesc').value,
+        image:document.getElementById('itemImage').value,
+        available:document.getElementById('itemAvailable').value==='true',
+        sort_order:parseInt(document.getElementById('itemSort').value)||0,
+        updated_at:new Date().toISOString()
+    };
+    if(!data.name)return showToast('⚠️ 請輸入餐點名稱');
+    const isEdit=document.getElementById('editId').value;
+    const method=isEdit?'PATCH':'POST';
+    const url=isEdit?`${SUPABASE_URL}/rest/v1/menu_items?id=eq.${id}`:`${SUPABASE_URL}/rest/v1/menu_items`;
+    await fetch(url,{
+        method:method,
+        headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body:JSON.stringify(data)
+    });
+    resetForm();loadItems();showToast('✅ 餐點已儲存')
+}
+
+function editItem(id){
+    fetch(`${SUPABASE_URL}/rest/v1/menu_items?id=eq.${id}`,{headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}})
+    .then(r=>r.json()).then(data=>{
+        if(data.length>0){
+            const i=data[0];
+            document.getElementById('editId').value=i.id;
+            document.getElementById('catId').value=i.category_id;
+            document.getElementById('catName').value=i.category_name;
+            document.getElementById('itemName').value=i.name;
+            document.getElementById('itemPrice').value=i.price;
+            document.getElementById('itemDesc').value=i.description||'';
+            document.getElementById('itemImage').value=i.image||'';
+            document.getElementById('itemAvailable').value=i.available.toString();
+            document.getElementById('itemSort').value=i.sort_order;
+            window.scrollTo({top:0,behavior:'smooth'});
+        }
+    })
+}
+
+async function deleteItem(id){
+    if(!confirm('確定刪除此餐點？'))return;
+    await fetch(`${SUPABASE_URL}/rest/v1/menu_items?id=eq.${id}`,{
+        method:'DELETE',
+        headers:{'apikey':SUPABASE_KEY,'Authorization':`Bearer ${SUPABASE_KEY}`}
+    });
+    loadItems();showToast('🗑️ 餐點已刪除')
+}
+
+function resetForm(){
+    document.getElementById('editId').value='';
+    document.getElementById('catId').value='';
+    document.getElementById('catName').value='';
+    document.getElementById('itemName').value='';
+    document.getElementById('itemPrice').value='';
+    document.getElementById('itemDesc').value='';
+    document.getElementById('itemImage').value='';
+    document.getElementById('itemAvailable').value='true';
+    document.getElementById('itemSort').value='0';
+}
+
+loadRestInfo();loadItems();
+</script>
+</body>
+</html>

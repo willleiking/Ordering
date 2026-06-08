@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>營收儀表板 | 雞伯燒烤</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root{--primary:#e85d04;--bg:#f5f0eb;--card:#fff;--text:#2d1a0e}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI','PingFang TC','Microsoft JhengHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:16px}
+        .header{text-align:center;padding:20px;background:linear-gradient(135deg,#1a0a00,#3d1c00,#5c2d0a);color:#fff;border-radius:16px;margin-bottom:20px}
+        .header h1{font-size:1.6rem}
+        .header .sub{opacity:.8;font-size:.9rem;margin-top:4px}
+        .filters{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:end}
+        .filters input,.filters select{padding:8px 12px;border-radius:8px;border:1.5px solid #ddd;font-family:inherit;font-size:.9rem}
+        .filters button{background:var(--primary);color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:700}
+        .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+        .stat-card{background:var(--card);border-radius:14px;padding:20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+        .stat-value{font-size:1.8rem;font-weight:700;color:var(--primary)}
+        .stat-label{font-size:.85rem;color:#888;margin-top:4px}
+        .chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:16px;margin-bottom:20px}
+        .chart-card{background:var(--card);border-radius:14px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+        .chart-card h3{font-size:1rem;margin-bottom:12px;color:#5c3a1e}
+        canvas{max-height:300px}
+        .table-card{background:var(--card);border-radius:14px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06);overflow-x:auto}
+        .table-card h3{font-size:1rem;margin-bottom:12px}
+        table{width:100%;border-collapse:collapse;font-size:.9rem}
+        th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #eee}
+        th{background:#fdf6f0;font-weight:700;color:#5c3a1e}
+        .loading{text-align:center;padding:40px;color:#888}
+    </style>
+</head>
+<body>
+
+<div class="header"><h1>📊 營收儀表板</h1><div class="sub">雞伯燒烤 - 新莊店</div></div>
+
+<div class="filters">
+    <div><label style="font-size:.85rem;font-weight:600">開始日期</label><input type="date" id="dateFrom"></div>
+    <div><label style="font-size:.85rem;font-weight:600">結束日期</label><input type="date" id="dateTo"></div>
+    <button onclick="loadDashboard()">🔍 查詢</button>
+</div>
+
+<div class="stats-grid" id="statsGrid"><div class="loading">載入中...</div></div>
+
+<div class="chart-grid">
+    <div class="chart-card"><h3>📈 每日營收趨勢</h3><canvas id="chartRevenue"></canvas></div>
+    <div class="chart-card"><h3>🔥 餐點銷售排行</h3><canvas id="chartItems"></canvas></div>
+</div>
+
+<div class="table-card"><h3>📋 餐點銷售明細</h3><div id="itemTable"><div class="loading">請選擇日期範圍</div></div></div>
+
+<script>
+const SUPABASE_URL = 'https://jqlklgrdefjoolngedqg.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxbGtsZ3JkZWZqb29sbmdlZHFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3MTY0OTIsImV4cCI6MjA5NjI5MjQ5Mn0.bnSozHES6CJtgh3FU4OeHRKv942Tx4rCS9buSmKq-6k';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const today=new Date().toISOString().split('T')[0];
+document.getElementById('dateFrom').value=today;
+document.getElementById('dateTo').value=today;
+
+let chartRevenue=null,chartItems=null;
+
+async function loadDashboard(){
+    const from=document.getElementById('dateFrom').value;
+    const to=document.getElementById('dateTo').value;
+    if(!from||!to)return alert('請選擇日期範圍');
+    const toEnd=to+'T23:59:59';
+    const{data}=await supabase.from('orders').select('*').gte('created_at',from).lte('created_at',toEnd).order('created_at');
+    if(!data)return;
+    
+    const totalOrders=data.length;
+    const totalRevenue=data.reduce((s,o)=>s+o.total,0);
+    const avgOrder=totalOrders>0?Math.round(totalRevenue/totalOrders):0;
+    const doneOrders=data.filter(o=>o.status==='done').length;
+    
+    document.getElementById('statsGrid').innerHTML=`
+        <div class="stat-card"><div class="stat-value">${totalOrders}</div><div class="stat-label">總訂單數</div></div>
+        <div class="stat-card"><div class="stat-value">$${totalRevenue.toLocaleString()}</div><div class="stat-label">總營收</div></div>
+        <div class="stat-card"><div class="stat-value">$${avgOrder.toLocaleString()}</div><div class="stat-label">平均客單價</div></div>
+        <div class="stat-card"><div class="stat-value">${doneOrders}</div><div class="stat-label">已完成</div></div>
+    `;
+    
+    const dailyMap={};
+    data.forEach(o=>{const day=o.created_at.split('T')[0];dailyMap[day]=(dailyMap[day]||0)+o.total});
+    const days=Object.keys(dailyMap).sort();
+    
+    if(chartRevenue)chartRevenue.destroy();
+    chartRevenue=new Chart(document.getElementById('chartRevenue'),{
+        type:'bar',
+        data:{labels:days.map(d=>d.slice(5)),datasets:[{label:'營收 ($)',data:days.map(d=>dailyMap[d]),backgroundColor:'#e85d04',borderRadius:6}]},
+        options:{responsive:true,plugins:{legend:{display:false}}}
+    });
+    
+    const itemCount={};
+    data.forEach(o=>{(o.items||[]).forEach(i=>{itemCount[i.name]=(itemCount[i.name]||0)+i.qty})});
+    const sorted=Object.entries(itemCount).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    
+    if(chartItems)chartItems.destroy();
+    chartItems=new Chart(document.getElementById('chartItems'),{
+        type:'bar',
+        data:{labels:sorted.map(([n])=>n.length>8?n.slice(0,7)+'…':n),datasets:[{label:'銷售數量',data:sorted.map(([,c])=>c),backgroundColor:'#f39c12',borderRadius:6}]},
+        options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}}}
+    });
+    
+    const totalQty=sorted.reduce((s,[,c])=>s+c,0);
+    document.getElementById('itemTable').innerHTML=`
+        <table><thead><tr><th>排名</th><th>餐點名稱</th><th>銷售數量</th><th>佔比</th></tr></thead>
+        <tbody>${sorted.map(([name,cnt],i)=>`<tr><td>${i+1}</td><td>${name}</td><td>${cnt}</td><td>${totalQty>0?Math.round(cnt/totalQty*100):0}%</td></tr>`).join('')}</tbody></table>
+    `;
+}
+
+loadDashboard();
+</script>
+</body>
+</html>

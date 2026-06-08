@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS 訂單系統 | 雞伯燒烤</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root{--primary:#e85d04;--danger:#e74c3c;--success:#27ae60;--bg:#1a1a1a;--card:#2a2a2a}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Segoe UI','PingFang TC','Microsoft JhengHei',sans-serif;background:var(--bg);color:#fff;min-height:100vh;padding:16px}
+        .tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap}
+        .tab{padding:10px 20px;border-radius:10px 10px 0 0;background:#333;color:#aaa;cursor:pointer;font-weight:600;font-size:.9rem;border:none}
+        .tab.active{background:var(--primary);color:#fff}
+        .header{text-align:center;padding:16px;background:#2d1a0e;border-radius:14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+        .header h1{font-size:1.5rem;color:var(--primary)}
+        .status{display:flex;align-items:center;gap:6px;font-size:.85rem}
+        .status-dot{width:10px;height:10px;border-radius:50%;background:var(--success);animation:pulse 2s infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+        .btn-sound{background:var(--primary);color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:700;font-size:.85rem}
+        .orders-container{max-width:800px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+        .order-card{background:var(--card);border-radius:14px;padding:16px;border-left:4px solid var(--primary);animation:slideIn .4s ease}
+        .order-card.new-order{border-left-color:var(--danger);animation:slideIn .4s ease,flashBg .5s ease 3}
+        @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+        @keyframes flashBg{0%,100%{background:var(--card)}50%{background:#4a1a1a}}
+        .order-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px}
+        .order-table{font-size:1.2rem;font-weight:700;color:var(--primary)}
+        .order-time{font-size:.8rem;color:#888}
+        .order-status{font-size:.8rem;padding:3px 10px;border-radius:10px;font-weight:600}
+        .status-pending{background:#f39c12;color:#000}
+        .status-done{background:var(--success);color:#fff}
+        .order-item-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #333;font-size:.9rem}
+        .order-total{font-size:1.2rem;font-weight:700;text-align:right;color:var(--danger);margin-top:8px}
+        .btn-done{background:var(--success);color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-weight:600;font-size:.85rem;margin-top:6px}
+        .history-filters{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:end}
+        .history-filters input,.history-filters select{padding:8px 12px;border-radius:8px;border:1px solid #555;background:#333;color:#fff;font-family:inherit}
+        .history-filters label{font-size:.85rem;color:#aaa}
+        .summary-box{background:var(--card);border-radius:14px;padding:16px;margin-bottom:16px;display:flex;gap:20px;flex-wrap:wrap}
+        .summary-item{text-align:center;min-width:80px}
+        .summary-value{font-size:1.5rem;font-weight:700;color:var(--primary)}
+        .summary-label{font-size:.8rem;color:#888}
+        .empty{text-align:center;color:#888;padding:40px;font-size:1rem}
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div>
+        <h1>🔥 雞伯燒烤 POS</h1>
+        <div class="status"><span class="status-dot"></span> 即時監聽中</div>
+    </div>
+    <button class="btn-sound" id="btnSound" onclick="toggleSound()">🔊 響鈴：開啟</button>
+</div>
+
+<div class="tabs">
+    <button class="tab active" onclick="switchTab('live')">🛎️ 即時訂單</button>
+    <button class="tab" onclick="switchTab('history')">📋 歷史訂單</button>
+</div>
+
+<div id="tabLive"><div class="orders-container" id="liveOrders"><div class="empty">等待新訂單...</div></div></div>
+
+<div id="tabHistory" style="display:none">
+    <div class="history-filters">
+        <div><label>開始日期</label><input type="date" id="dateFrom"></div>
+        <div><label>結束日期</label><input type="date" id="dateTo"></div>
+        <div><label>狀態</label><select id="statusFilter"><option value="">全部</option><option value="pending">待處理</option><option value="done">已完成</option></select></div>
+        <button class="btn-sound" onclick="loadHistory()" style="padding:8px 16px">🔍 查詢</button>
+    </div>
+    <div class="summary-box" id="historySummary"></div>
+    <div class="orders-container" id="historyOrders"><div class="empty">請選擇日期範圍查詢</div></div>
+</div>
+
+<audio id="alertSound" preload="auto">
+    <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACAf39/f4B/f3+AgH9/f3+AgIB/f3+AgIB/gH9/f4CAgH9/f3+AgIB/f3+AgIB/gH9/f4CAgH9/f3+AgIB/f3+AgIB/gH9/f4CAgH9/f3+AgIB/f3+AgIB/gH9/f4CAgH9/f3+AgIB/f3+AgIB/gH9/f4CAgH9/f3+AgH9/f39/gIB/f39/gICAf39/f4CAgH9/f3+AgIB/f39/gICAf39/f4CAgH9/f3+AgIB/f3+AgICAf39/f4CAgA==" type="audio/wav">
+</audio>
+
+<script>
+const SUPABASE_URL = 'https://jqlklgrdefjoolngedqg.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxbGtsZ3JkZWZqb29sbmdlZHFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3MTY0OTIsImV4cCI6MjA5NjI5MjQ5Mn0.bnSozHES6CJtgh3FU4OeHRKv942Tx4rCS9buSmKq-6k';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let soundEnabled = true;
+let knownOrderIds = new Set();
+
+function toggleSound(){soundEnabled=!soundEnabled;document.getElementById('btnSound').textContent=soundEnabled?'🔊 響鈴：開啟':'🔇 響鈴：關閉'}
+
+function playAlert(){
+    if(!soundEnabled)return;
+    const audio=document.getElementById('alertSound');
+    audio.currentTime=0;audio.play().catch(()=>{});
+    if(navigator.vibrate)navigator.vibrate([200,100,200]);
+}
+
+function formatTime(ts){const d=new Date(ts);return d.toLocaleString('zh-TW',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}
+
+async function loadLiveOrders(){
+    const{data}=await supabase.from('orders').select('*').order('created_at',{ascending:false}).limit(20);
+    if(data){data.forEach(o=>knownOrderIds.add(o.id));renderOrders(data,'liveOrders',true)}
+}
+
+function renderOrders(orders,containerId,isLive){
+    const container=document.getElementById(containerId);
+    if(!orders||orders.length===0){container.innerHTML='<div class="empty">尚無訂單</div>';return}
+    container.innerHTML=orders.map((o,i)=>`
+        <div class="order-card${isLive&&i===0?' new-order':''}" id="order-${o.id}">
+            <div class="order-header">
+                <span class="order-table">🪑 桌號 ${o.table_num}</span>
+                <span class="order-time">${formatTime(o.created_at)}</span>
+                <span class="order-status ${o.status==='done'?'status-done':'status-pending'}">${o.status==='done'?'已完成':'待處理'}</span>
+            </div>
+            ${(o.items||[]).map(i=>`<div class="order-item-row"><span>${i.name}</span><span>x${i.qty} - $${i.price*i.qty}</span></div>`).join('')}
+            <div class="order-total">💰 總計：$${o.total}</div>
+            ${o.status!=='done'?`<button class="btn-done" onclick="markDone(${o.id})">✅ 完成出餐</button>`:''}
+        </div>
+    `).join('');
+}
+
+async function markDone(id){await supabase.from('orders').update({status:'done'}).eq('id',id);loadLiveOrders()}
+
+async function loadHistory(){
+    const from=document.getElementById('dateFrom').value;
+    const to=document.getElementById('dateTo').value;
+    const status=document.getElementById('statusFilter').value;
+    if(!from||!to)return alert('請選擇日期範圍');
+    const toEnd=to+'T23:59:59';
+    let query=supabase.from('orders').select('*').gte('created_at',from).lte('created_at',toEnd).order('created_at',{ascending:false});
+    if(status)query=query.eq('status',status);
+    const{data}=await query;
+    if(data){renderOrders(data,'historyOrders',false);renderSummary(data)}
+}
+
+function renderSummary(orders){
+    const totalOrders=orders.length;
+    const totalRevenue=orders.reduce((s,o)=>s+o.total,0);
+    const doneOrders=orders.filter(o=>o.status==='done').length;
+    const itemCount={};
+    orders.forEach(o=>{(o.items||[]).forEach(i=>{itemCount[i.name]=(itemCount[i.name]||0)+i.qty})});
+    const topItems=Object.entries(itemCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    document.getElementById('historySummary').innerHTML=`
+        <div class="summary-item"><div class="summary-value">${totalOrders}</div><div class="summary-label">總訂單數</div></div>
+        <div class="summary-item"><div class="summary-value">$${totalRevenue.toLocaleString()}</div><div class="summary-label">總營收</div></div>
+        <div class="summary-item"><div class="summary-value">${doneOrders}</div><div class="summary-label">已完成</div></div>
+        <div class="summary-item" style="flex:2;min-width:200px">
+            <div class="summary-label" style="margin-bottom:4px">🔥 熱門餐點 TOP5</div>
+            ${topItems.map(([name,cnt],i)=>`<div style="font-size:.85rem;color:#ddd">${i+1}. ${name} x${cnt}</div>`).join('')}
+        </div>
+    `;
+}
+
+function subscribeRealtime(){
+    supabase.channel('orders-channel')
+        .on('postgres_changes',{event:'INSERT',schema:'public',table:'orders'},payload=>{
+            if(!knownOrderIds.has(payload.new.id)){knownOrderIds.add(payload.new.id);playAlert();loadLiveOrders()}
+        })
+        .on('postgres_changes',{event:'UPDATE',schema:'public',table:'orders'},()=>{loadLiveOrders()})
+        .subscribe();
+}
+
+function switchTab(tab){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById('tabLive').style.display=tab==='live'?'block':'none';
+    document.getElementById('tabHistory').style.display=tab==='history'?'block':'none';
+    event.target.classList.add('active');
+    if(tab==='live')loadLiveOrders();
+}
+
+const today=new Date().toISOString().split('T')[0];
+document.getElementById('dateFrom').value=today;
+document.getElementById('dateTo').value=today;
+
+loadLiveOrders();
+subscribeRealtime();
+</script>
+</body>
+</html>
