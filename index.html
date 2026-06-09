@@ -12,26 +12,24 @@
         .logo{font-size:56px;margin-bottom:8px}
         h1{font-size:1.5rem;color:#2d1a0e;margin-bottom:2px}
         .branch{color:#888;font-size:.85rem;margin-bottom:20px}
-        .auto-mode{display:none}
-        .auto-mode.show{display:block}
+        .auto-mode{display:none}.auto-mode.show{display:block}
         .table-found{background:#fdf6f0;border:2px solid var(--primary);border-radius:16px;padding:20px;margin-bottom:16px}
         .table-found .icon{font-size:40px}
         .table-found .table-num{font-size:2rem;font-weight:700;color:var(--primary);margin:8px 0}
         .table-found .hint{font-size:.85rem;color:#888}
-        .btn-start{display:block;width:100%;padding:16px;background:var(--primary);color:#fff;border:none;border-radius:14px;font-size:1.1rem;font-weight:700;cursor:pointer;margin-top:12px;box-shadow:0 4px 16px rgba(232,93,4,.3);font-family:inherit;letter-spacing:1px}
+        .btn-start{display:block;width:100%;padding:16px;background:var(--primary);color:#fff;border:none;border-radius:14px;font-size:1.1rem;font-weight:700;cursor:pointer;margin-top:12px;box-shadow:0 4px 16px rgba(232,93,4,.3);font-family:inherit}
         .btn-start:active{transform:scale(.97)}
-        .manual-mode{display:none}
-        .manual-mode.show{display:block}
+        .manual-mode{display:none}.manual-mode.show{display:block}
         .btn-toggle{background:none;border:none;color:var(--primary);font-size:.85rem;cursor:pointer;text-decoration:underline;margin-top:8px;font-family:inherit}
         label{display:block;font-weight:600;margin-bottom:8px;color:#5c3a1e;text-align:left;font-size:.9rem}
-        input{width:100%;padding:14px 18px;border:2px solid #e0d5ca;border-radius:14px;font-size:1.2rem;font-weight:600;text-align:center;letter-spacing:2px;margin-bottom:16px;font-family:inherit}
+        input{width:100%;padding:14px;border:2px solid #e0d5ca;border-radius:14px;font-size:1.2rem;font-weight:600;text-align:center;letter-spacing:2px;margin-bottom:16px;font-family:inherit}
         input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 4px rgba(232,93,4,.1)}
         .error{color:#e74c3c;font-size:.85rem;margin-bottom:12px;display:none}
         .loading{color:#888;font-size:.9rem;padding:20px}
     </style>
 </head>
 <body>
-<div class="container" id="app">
+<div class="container">
     <div class="loading" id="loading">🔄 載入中...</div>
     <div class="auto-mode" id="autoMode">
         <div class="logo">🔥</div>
@@ -58,66 +56,31 @@
     </div>
 </div>
 <script>
-const SUPABASE_URL = 'https://jqlklgrdefjoolngedqg.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpxbGtsZ3JkZWZqb29sbmdlZHFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3MTY0OTIsImV4cCI6MjA5NjI5MjQ5Mn0.bnSozHES6CJtgh3FU4OeHRKv942Tx4rCS9buSmKq-6k';
-let detectedTable = null;
-let restInfo = { name: '雞伯燒烤', branch: '新莊店' };
-
-async function init() {
-    try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/restaurant_info?id=eq.1`, {
-            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-        });
-        const data = await res.json();
-        if (data.length > 0) restInfo = data[0];
-    } catch(e) {}
-    document.getElementById('restName').textContent = restInfo.name;
-    document.getElementById('restBranch').textContent = restInfo.branch;
-    document.getElementById('restName2').textContent = restInfo.name;
-    document.getElementById('restBranch2').textContent = restInfo.branch;
-    const params = new URLSearchParams(window.location.search);
-    detectedTable = params.get('table');
-    document.getElementById('loading').style.display = 'none';
-    if (detectedTable) {
-        document.getElementById('autoTableNum').textContent = detectedTable;
+var SUPABASE_URL='https://ezgxzbbygadaqyvajulk.supabase.co';
+var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV6Z3h6YmJ5Z2FkYXF5dmFqdWxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDQ1ODgsImV4cCI6MjA5NjQyMDU4OH0.vuIk8DQuBLwMDuHp38ez52pH6Ju-UfcmLe0ltXLuHjw';
+var detectedTable=null,restInfo={name:'雞伯燒烤',branch:'新莊店'};
+async function init(){
+    try{var r=await fetch(SUPABASE_URL+'/rest/v1/restaurant_info?id=eq.1',{headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY}});var d=await r.json();if(d.length>0)restInfo=d[0]}catch(e){}
+    document.getElementById('restName').textContent=restInfo.name;
+    document.getElementById('restBranch').textContent=restInfo.branch;
+    document.getElementById('restName2').textContent=restInfo.name;
+    document.getElementById('restBranch2').textContent=restInfo.branch;
+    var p=new URLSearchParams(window.location.search);detectedTable=p.get('table');
+    document.getElementById('loading').style.display='none';
+    if(detectedTable){
+        document.getElementById('autoTableNum').textContent=detectedTable;
         document.getElementById('autoMode').classList.add('show');
-        document.getElementById('btnBackAuto').style.display = 'inline-block';
-    } else {
+        document.getElementById('btnBackAuto').style.display='inline-block';
+    }else{
         document.getElementById('manualMode').classList.add('show');
         document.getElementById('tableInput').focus();
     }
 }
-
-function startOrder() {
-    if (detectedTable) {
-        sessionStorage.setItem('currentTable', detectedTable);
-        window.location.href = 'menu.html';
-    }
-}
-
-function manualStart() {
-    const t = document.getElementById('tableInput').value.trim();
-    if (!t) { document.getElementById('errorMsg').style.display = 'block'; document.getElementById('tableInput').focus(); return; }
-    document.getElementById('errorMsg').style.display = 'none';
-    sessionStorage.setItem('currentTable', t);
-    window.location.href = 'menu.html';
-}
-
-function switchToManual() {
-    document.getElementById('autoMode').classList.remove('show');
-    document.getElementById('manualMode').classList.add('show');
-    document.getElementById('tableInput').focus();
-}
-
-function switchToAuto() {
-    document.getElementById('manualMode').classList.remove('show');
-    document.getElementById('autoMode').classList.add('show');
-}
-
-document.getElementById('tableInput').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') manualStart();
-});
-
+function startOrder(){if(detectedTable){sessionStorage.setItem('currentTable',detectedTable);window.location.href='menu.html'}}
+function manualStart(){var t=document.getElementById('tableInput').value.trim();if(!t){document.getElementById('errorMsg').style.display='block';return}sessionStorage.setItem('currentTable',t);window.location.href='menu.html'}
+function switchToManual(){document.getElementById('autoMode').classList.remove('show');document.getElementById('manualMode').classList.add('show');document.getElementById('tableInput').focus()}
+function switchToAuto(){document.getElementById('manualMode').classList.remove('show');document.getElementById('autoMode').classList.add('show')}
+document.getElementById('tableInput').addEventListener('keydown',function(e){if(e.key==='Enter')manualStart()});
 init();
 </script>
 </body>
