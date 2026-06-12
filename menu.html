@@ -23,11 +23,11 @@
         .cat-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);font-weight:600}
         .menu-container{max-width:600px;margin:0 auto;padding:12px}
         .category-title{font-size:1.1rem;font-weight:700;color:#3d1c00;padding:12px 0 6px}
-        .menu-item{display:flex;gap:10px;background:var(--card);border-radius:14px;padding:10px;margin-bottom:8px;box-shadow:0 2px 8px rgba(0,0,0,.06);align-items:center;position:relative;overflow:hidden}
+        .menu-item{display:flex;gap:14px;background:var(--card);border-radius:14px;padding:12px;margin-bottom:8px;box-shadow:0 2px 8px rgba(0,0,0,.06);align-items:center;position:relative;overflow:hidden}
         .menu-item.unavailable{opacity:.5;pointer-events:none;filter:grayscale(.3)}
         .menu-item.unavailable::after{content:'暫停供應';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-15deg);font-size:1.1rem;font-weight:700;color:#c0392b;background:rgba(255,255,255,.9);padding:4px 14px;border-radius:6px;border:2px solid #c0392b;z-index:1}
-        .item-image{width:60px;height:60px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,#fde4cf,#f8d5b8);display:flex;align-items:center;justify-content:center;font-size:30px;color:#c47a3a}
-        .item-image img{width:100%;height:100%;object-fit:cover;border-radius:10px}
+        .item-image-box{width:65px;height:65px;border-radius:10px;flex-shrink:0;overflow:hidden;background:#f0dcc8;display:flex;align-items:center;justify-content:center;font-size:28px;color:#e85d04}
+        .item-image-box img{width:100%;height:100%;object-fit:cover}
         .item-info{flex:1;min-width:0}
         .item-name{font-size:.95rem;font-weight:700;margin-bottom:2px}
         .item-desc{font-size:.75rem;color:#8b6b50;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -63,7 +63,7 @@
         .btn-clear{background:transparent;border:1.5px solid #ddd;color:#999;padding:7px 12px;border-radius:22px;cursor:pointer;font-size:.8rem}
         .toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-120px);background:#333;color:#fff;padding:10px 20px;border-radius:20px;font-weight:600;z-index:999;transition:transform .35s;pointer-events:none;font-size:.85rem}
         .toast.show{transform:translateX(-50%) translateY(0)}
-        .no-table{text-align:center;padding:50px 20px}.no-table a{color:var(--primary);font-weight:700}
+        .no-table{text-align:center;padding:50px 20px} .no-table a{color:var(--primary);font-weight:700}
         .loading{text-align:center;padding:40px;color:#888}
     </style>
 </head>
@@ -101,7 +101,6 @@ var supabase=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 var tableNum=sessionStorage.getItem('currentTable');
 if(!tableNum){
     document.getElementById('menuContainer').innerHTML='<div class="no-table"><h2>⚠️ 請先選擇桌號</h2><p>請從 <a href="index.html">入口頁面</a> 輸入桌號</p></div>';
-    document.getElementById('catNav').style.display='none';document.getElementById('cartFab').style.display='none';
     throw new Error('no table');
 }
 document.getElementById('tableNumber').textContent=tableNum;
@@ -125,22 +124,41 @@ async function loadAll(){
         renderCatNav();renderMenu();
     }catch(e){console.error(e);document.getElementById('menuContainer').innerHTML='<div class="loading">載入失敗，請重新整理</div>'}
 }
+
 function renderCatNav(){
     var nav=document.getElementById('catNavInner');
-    nav.innerHTML=categories.map(function(cat,i){return'<button class="cat-tab'+(i===0?' active':'')+'" data-cat-id="'+cat.id+'">'+cat.name+'</button>'}).join('');
+    nav.innerHTML=categories.map(function(cat,i){
+        return '<button class="cat-tab'+(i===0?' active':'')+'" data-cat-id="'+cat.id+'">'+cat.name+'</button>';
+    }).join('');
+    
     nav.querySelectorAll('.cat-tab').forEach(function(tab){
         tab.addEventListener('click',function(){
             nav.querySelectorAll('.cat-tab').forEach(function(t){t.classList.remove('active')});
             this.classList.add('active');
-            document.querySelectorAll('.category-section').forEach(function(s){s.style.display=s.dataset.catId===this.dataset.catId?'block':'none'});
+            
+            // 💡 關鍵修正：先把被點擊的分類 ID 存到變數裡，這樣下面才不會迷路！
+            var currentCatId = this.dataset.catId; 
+            
+            document.querySelectorAll('.category-section').forEach(function(s){
+                // 使用剛剛存好的變數 currentCatId 來做精準的比對
+                s.style.display = s.dataset.catId === currentCatId ? 'block' : 'none';
+            });
         });
     });
 }
+
 function renderMenu(){
     var container=document.getElementById('menuContainer');
     container.innerHTML=categories.map(function(cat,catIdx){
         return'<section class="category-section" data-cat-id="'+cat.id+'" style="display:'+(catIdx===0?'block':'none')+'"><h2 class="category-title">'+cat.name+'</h2>'+cat.items.map(function(item){
-            return'<div class="menu-item'+(item.available?'':' unavailable')+'" data-item-id="'+item.id+'"><div class="item-image">'+(item.image?'<img src="'+item.image+'" alt="'+item.name+'">':'🍽️')+'</div><div class="item-info"><div class="item-name">'+item.name+'</div><div class="item-desc">'+(item.description||'')+'</div><div class="item-price-row"><div class="item-price">$'+item.price+'</div>'+(item.available?'<div class="qty-control"><button class="qty-btn minus" data-item-id="'+item.id+'">−</button><input type="number" class="qty-num" value="0" min="0" max="99" data-item-id="'+item.id+'" readonly><button class="qty-btn plus" data-item-id="'+item.id+'">+</button></div>':'')+'</div></div></div>';
+            // 🛡️ 安全圖片防錯判定
+            var imgHtml='';
+            if(item.image && item.image.trim()!==''){
+                imgHtml='<img src="' + item.image + '" alt="' + item.name + '">';
+            }else{
+                imgHtml='🍳';
+            }
+            return'<div class="menu-item'+(item.available?'':' unavailable')+'" data-item-id="'+item.id+'"><div class="item-image-box">'+imgHtml+'</div><div class="item-info"><div class="item-name">'+item.name+'</div><div class="item-desc">'+(item.description||'')+'</div><div class="item-price-row"><div class="item-price">$'+item.price+'</div>'+(item.available?'<div class="qty-control"><button class="qty-btn minus" data-item-id="'+item.id+'">−</button><input type="number" class="qty-num" value="0" min="0" max="99" data-item-id="'+item.id+'" readonly><button class="qty-btn plus" data-item-id="'+item.id+'">+</button></div>':'')+'</div></div></div>';
         }).join('')+'</section>';
     }).join('');
     document.querySelectorAll('.qty-btn.minus').forEach(function(b){b.addEventListener('click',function(){changeQty(b.dataset.itemId,-1)})});
